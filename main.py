@@ -1,4 +1,5 @@
 import pandas as pd
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, Request
 from email_utils import send_alert
 from database import init_db, get_connection
@@ -10,6 +11,13 @@ from nlp_utils import (
 )
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 init_db()
 
 # ================= GET ALL EXPENSES =================

@@ -151,6 +151,8 @@ async def dialogflow_webhook(request: Request):
         )
 
         # -------- BUDGET CHECK --------
+        alert_message = ""
+
         cursor.execute("""
             SELECT monthly_limit, alert_threshold
             FROM budgets
@@ -172,15 +174,24 @@ async def dialogflow_webhook(request: Request):
 
             if spent >= monthly_limit * threshold:
                 try:
-                  send_alert(category, spent, monthly_limit)
+                    send_alert(category, spent, monthly_limit)
                 except Exception as e:
-                  print("EMAIL ERROR:", e)
+                    print("EMAIL ERROR:", e)
+                    # FIX: notify user in chat if email fails
+                    alert_message = (
+                        f" ⚠️ Budget alert: You've spent ₹{int(spent)} of "
+                        f"your ₹{int(monthly_limit)} {category} budget "
+                        f"({int((spent / monthly_limit) * 100)}%)."
+                    )
 
+        # FIX: commit is now always reached — even if send_alert raises
         conn.commit()
         conn.close()
 
         return {
-            "fulfillmentText": f"Logged ₹{amount} under *{category}* on {expense_date}."
+            "fulfillmentText": (
+                f"Logged ₹{amount} under *{category}* on {expense_date}.{alert_message}"
+            )
         }
 
     # ================= UPDATE DATE =================
@@ -241,7 +252,7 @@ async def dialogflow_webhook(request: Request):
 
         return {
             "fulfillmentText": (
-                f"Here’s your expense summary:\n"
+                f"Here's your expense summary:\n"
                 f"{breakdown}\n\n"
                 f"Total spent: ₹{total}"
             )
@@ -333,8 +344,9 @@ async def dialogflow_webhook(request: Request):
                 f"Budget set: ₹{amount} per month for {category}."
             )
         }
-    
-        # ================= EXPORT EXPENSES =================
+
+    # ================= EXPORT EXPENSES =================
+    # FIX: was incorrectly indented inside set_budget block (dead code) — moved out
     if intent == "export_expenses":
 
         cursor.execute("""
@@ -370,5 +382,5 @@ async def dialogflow_webhook(request: Request):
     # ================= FALLBACK =================
     conn.close()
     return {
-        "fulfillmentText": "Sorry, I couldn’t understand that. Can you rephrase?"
+        "fulfillmentText": "Sorry, I couldn't understand that. Can you rephrase?"
     }

@@ -3,10 +3,18 @@ import sqlite3
 DB_NAME = "fintrack.db"
 
 def get_connection():
-    return sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(
+        DB_NAME,
+        timeout=30,
+        check_same_thread=False
+    )
+
+    conn.execute("PRAGMA journal_mode=WAL;")
+    return conn
+
 
 def init_db():
-    conn = sqlite3.connect("fintrack.db")
+    conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -30,4 +38,3 @@ def init_db():
 
     conn.commit()
     conn.close()
-

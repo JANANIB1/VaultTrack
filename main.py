@@ -171,7 +171,10 @@ async def dialogflow_webhook(request: Request):
             spent = cursor.fetchone()[0] or 0
 
             if spent >= monthly_limit * threshold:
-                send_alert(category, spent, monthly_limit)
+                try:
+                  send_alert(category, spent, monthly_limit)
+                except Exception as e:
+                  print("EMAIL ERROR:", e)
 
         conn.commit()
         conn.close()

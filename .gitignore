@@ -1,4 +1,8 @@
 __pycache__/
+backend/__pycache__/
 .env
 *.db
 *.csv
+node_modules/
+frontend/node_modules/
+frontend/dist/

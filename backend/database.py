@@ -1,15 +1,15 @@
-import sqlite3
+import os
+import psycopg2
+import psycopg2.extras
+from dotenv import load_dotenv
 
-DB_NAME = "fintrack.db"
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+
 
 def get_connection():
-    conn = sqlite3.connect(
-        DB_NAME,
-        timeout=30,
-        check_same_thread=False
-    )
-
-    conn.execute("PRAGMA journal_mode=WAL;")
+    conn = psycopg2.connect(DATABASE_URL)
     return conn
 
 
@@ -19,22 +19,23 @@ def init_db():
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            amount REAL,
-            category TEXT,
-            date TEXT,
+            id          SERIAL PRIMARY KEY,
+            amount      NUMERIC(12, 2),
+            category    TEXT,
+            date        TEXT,
             description TEXT
         )
     """)
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS budgets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT UNIQUE,
-            monthly_limit REAL,
-            alert_threshold REAL
+            id               SERIAL PRIMARY KEY,
+            category         TEXT UNIQUE,
+            monthly_limit    NUMERIC(12, 2),
+            alert_threshold  NUMERIC(5, 4)
         )
     """)
 
     conn.commit()
+    cursor.close()
     conn.close()
